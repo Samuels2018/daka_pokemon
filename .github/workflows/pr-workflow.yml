@@ -1,0 +1,48 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  pr-checks:
+    name: Format, Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23'
+          cache: 'npm'
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci --legacy-peer-deps
+
+      - name: Backend - Lint
+        run: cd backend && npm run lint
+
+      - name: Backend - Format
+        run: cd backend && npm run format
+
+      - name: Backend - Test
+        run: cd backend && npm test
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci --legacy-peer-deps
+      
+      - name: Frontend - Lint
+        run: cd frontend && npm run lint
+
+      - name: Frontend - Format
+        run: cd frontend && npm run format
+
+      - name: Frontend - Type Check
+        run: cd frontend && npm run type-check

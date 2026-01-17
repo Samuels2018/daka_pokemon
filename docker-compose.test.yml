@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # Base de datos (Simulación Producción)
+  db:
+    image: postgres:17-alpine
+    container_name: postgres-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: ${POSTGRES_INITDB_ARGS}
+    expose:
+      - "5432"
+    volumes:
+      - postgres_data_test:/var/lib/postgresql/data
+    networks:
+      - internal-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    # Backend (Production Build)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production  # Usar stage production
+    container_name: backend-test
+    restart: unless-stopped
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: production
+      PORT: 3000
+      FRONTEND_URL: ${FRONTEND_URL}
+    expose:
+      - "3000"
+    networks:
+      - internal-network
+      - external-network  # Para que frontend pueda acceder
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend (Nginx Server)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production  # Usar stage production con nginx
+    container_name: frontend-test
+    restart: unless-stopped
+    environment:
+      # Estas variables se usan en build time, no runtime
+      # Para runtime, configurar en nginx o usar envsubst
+      VITE_API_URL: ${VITE_API_URL}
+      VITE_WS_URL: ${VITE_WS_URL}
+    ports:
+      - "${FRONTEND_PORT:-80}:80"  # Puerto configurable
+    networks:
+      - external-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  postgres_data_test:
+    driver: local
+    name: daka-postgres-data-test
+
+networks:
+  # Red interna - NO accesible desde fuera
+  internal-network:
+    driver: bridge
+    internal: true  # Red interna, sin acceso externo
+    name: daka-internal-network-test
+  
+  # Red externa - Para frontend y comunicación con backend
+  external-network:
+    driver: bridge
+    name: daka-external-network-test

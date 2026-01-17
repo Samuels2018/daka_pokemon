@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: ${POSTGRES_INITDB_ARGS}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: builder  # stage builder para desarrollo
+    container_name: backend-dev
+    restart: unless-stopped
+    command: npm run start:dev  # Hot reload
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      DATABASE_NAME: ${POSTGRES_DB}
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: development
+      PORT: 3000
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "3000:3000"
+    volumes:
+      # Montar código para hot-reload
+      - ./backend/src:/usr/src/app/src
+      - ./backend/tsconfig.json:/usr/src/app/tsconfig.json
+      - ./backend/nest-cli.json:/usr/src/app/nest-cli.json
+      - ./backend/package.json:/usr/src/app/package.json
+      # Volumen para node_modules (evita conflictos con host)
+      - backend_node_modules:/usr/src/app/node_modules
+    networks:
+      - app-network
+
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development  # stage development
+    container_name: frontend-dev
+    restart: unless-stopped
+    command: npm run dev -- --host
+    environment:
+      VITE_API_URL: ${VITE_API_URL}
+      VITE_WS_URL: ${VITE_WS_URL}
+    ports:
+      - "5173:5173"
+    volumes:
+      # Montar código para hot-reload
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - ./frontend/index.html:/app/index.html
+      - ./frontend/vite.config.ts:/app/vite.config.ts
+      - ./frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/package.json:/app/package.json
+      # Volumen para node_modules
+      - frontend_node_modules:/app/node_modules
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:5173 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+    driver: local
+    name: daka-postgres-data-dev
+  backend_node_modules:
+    driver: local
+    name: daka-backend-node-modules-dev
+  frontend_node_modules:
+    driver: local
+    name: daka-frontend-node-modules-dev
+
+networks:
+  app-network:
+    driver: bridge
+    name: daka-app-network-dev
