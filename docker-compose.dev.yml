@@ -38,8 +38,8 @@ services:
       DATABASE_NAME: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       NODE_ENV: development
-      PORT: 3000
-      FRONTEND_URL: http://localhost:5173
+      PORT: ${PORT}
+      FRONTEND_URL: ${FRONTEND_URL}
     ports:
       - "3000:3000"
     volumes:

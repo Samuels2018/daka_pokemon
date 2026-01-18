@@ -51,7 +51,7 @@ export class PokemonGateway
       }
 
       // Verificar token JWT
-      const secret = this.configService.get<string>('JWT_SECRET');
+      const secret = this.configService.get<string>('JWT_SECRET_');
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret,
       });
