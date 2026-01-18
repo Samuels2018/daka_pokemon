@@ -51,7 +51,7 @@ export class PokemonGateway
       }
 
       // Verificar token JWT
-      const secret = this.configService.get<string>('JWT_SECRET_');
+      const secret = this.configService.get<string>('JWT_SECRET');
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret,
       });
@@ -177,7 +177,6 @@ export class PokemonGateway
       (client.handshake.query?.token as string) ||
       null;
 
-    // También intentar desde headers (Authorization: Bearer <token>)
     if (!token) {
       const authHeader = client.handshake.headers?.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {

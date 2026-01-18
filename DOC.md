@@ -1,7 +1,3 @@
-==============================================================================
-                        PROYECTO DAKA_POKEMON
-==============================================================================
-
 DESCRIPCIÓN GENERAL
 ===================
 
@@ -272,30 +268,3 @@ El PokemonGateway implementa comunicación bidireccional en tiempo real:
         delete-sprite: Cliente solicita eliminación de sprite
 
     Guardias: @UseGuards(AuthGuard('jwt')) en la clase gateway
-
-FUENTES: TECHNICAL_ASSESSMENT.md104-127
-
-IMPLEMENTACIÓN DE SEGURIDAD
-===========================
-
-Los requisitos de seguridad constituyen el 25% de la puntuación de evaluación.
-
-MEDIDAS DE SEGURIDAD (CUMPLIMIENTO OWASP TOP 10 2021)
-Categoría OWASP	Implementación
-A01: Broken Access Control	@UseGuards en rutas protegidas, guards de Vue Router verificando estado de autenticación
-A02: Cryptographic Failures	Hashing bcrypt (10+ salt rounds), JWT_SECRET desde variables de entorno
-A03: Injection	DTOs con class-validator, consultas parametrizadas de TypeORM
-A05: Security Misconfiguration	Orígenes CORS específicos, configuración basada en entorno, mensajes genéricos
-A07: Identification/Authentication	Validación fuerte de contraseñas, expiración de tokens JWT (1 hora), cookies HTTP-Only
-A08: Software and Data Integrity	Validación de respuesta de API externa, verificación de estructura
-A09: Security Logging Failures	NestJS Logger para eventos de seguridad, logs detallados en servidor
-A10: Server-Side Request Forgery	URL base fija de PokeAPI, sin URLs controladas por usuario, generación de IDs en servidor
-
-FUENTES: TECHNICAL_ASSESSMENT.md196-226, README.md23-25
-
-ESTÁNDARES DE DESARROLLO
-========================
-
-El proyecto aplica controles de calidad automatizados mediante GitHub Actions:
-
-COMPROBACIONES DE CALIDAD

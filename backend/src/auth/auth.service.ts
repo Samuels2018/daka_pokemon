@@ -103,7 +103,7 @@ export class AuthService {
     this.logger.log(`Login attempt for user: ${loginDto.username}`);
     try {
       // Validar credenciales
-      const user: User | null = await this.validateUser(
+      const user = await this.validateUser(
         loginDto.username,
         loginDto.password,
       );

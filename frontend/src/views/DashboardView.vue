@@ -1,12 +1,4 @@
 <script setup lang="ts">
-// TODO: Implementar Dashboard con WebSockets
-// Requisitos:
-// 1. Conectar a WebSocket (autenticado con JWT)
-// 2. Mostrar lista de sprites recibidos
-// 3. Botón para solicitar nuevo sprite
-// 4. Botón para limpiar lista
-// 5. Implementar logout
-
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { io, Socket } from 'socket.io-client'
